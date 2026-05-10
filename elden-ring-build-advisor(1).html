@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Elden Ring Build Advisor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #d4a84b;
+    --gold-dark: #8b6914;
+    --gold-dim: #9a7a35;
+    --text: #c8b89a;
+    --text-muted: #8a7a5a;
+    --text-dim: #6a5a3a;
+    --bg: #0d0a05;
+    --bg-card: rgba(20, 15, 5, 0.85);
+    --bg-header: rgba(35, 25, 8, 0.9);
+    --border: #4a3a1a;
+    --border-bright: #6a5a2a;
+    --early: #4a9a3a;
+    --mid: #3a7ab0;
+    --late: #c84a4a;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(100, 75, 15, 0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(60, 40, 10, 0.12) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0 L31 29 L60 30 L31 31 L30 60 L29 31 L0 30 L29 29Z' fill='%23ffffff' fill-opacity='0.008'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    color: var(--text);
+    font-family: 'Crimson Text', Georgia, serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center;
+    padding: 4rem 1.5rem 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 80% at 50% 0%, rgba(180, 130, 30, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-rune {
+    font-size: 48px;
+    color: var(--gold);
+    opacity: 0.7;
+    display: block;
+    margin-bottom: 1rem;
+    letter-spacing: 0.3em;
+    animation: glow 3s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { opacity: 0.5; text-shadow: 0 0 20px rgba(212,168,75,0.2); }
+    50% { opacity: 0.85; text-shadow: 0 0 40px rgba(212,168,75,0.5); }
+  }
+
+  .hero-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    text-shadow: 0 0 60px rgba(212,168,75,0.3);
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1rem auto;
+    max-width: 500px;
+  }
+
+  .hero-divider-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-bright), transparent);
+  }
+
+  .hero-divider-gem {
+    width: 8px;
+    height: 8px;
+    background: var(--gold-dim);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  .hero-subtitle {
+    font-size: 17px;
+    color: var(--text-muted);
+    font-style: italic;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 1.5rem 5rem;
+  }
+
+  /* ── FORM CARD ── */
+  .form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(6px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--gold-dim), transparent);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .form-field { display: flex; flex-direction: column; gap: 8px; }
+  .form-field.full { grid-column: 1 / -1; }
+
+  .field-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .field-select, .field-input {
+    background: rgba(10, 8, 3, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 16px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  .field-select {
+    cursor: pointer;
+    padding-right: 32px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a5a3a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  .field-select:focus, .field-input:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 3px rgba(212,168,75,0.08);
+  }
+
+  .field-select option { background: #1a1005; }
+  .field-input::placeholder { color: var(--text-dim); }
+
+  /* API Key field */
+  .api-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    padding: 12px 14px;
+    background: rgba(10, 8, 3, 0.5);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .api-icon { font-size: 18px; color: var(--text-dim); flex-shrink: 0; }
+
+  .api-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 15px;
+  }
+
+  .api-input::placeholder { color: var(--text-dim); font-style: italic; }
+
+  .api-link {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+  }
+  .api-link:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+  /* ── FORGE BUTTON ── */
+  .forge-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 45%, var(--gold-dark) 100%);
+    border: none;
+    border-radius: 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1005;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(180, 130, 30, 0.25);
+  }
+
+  .forge-btn:hover { opacity: 0.92; box-shadow: 0 6px 28px rgba(180, 130, 30, 0.38); }
+  .forge-btn:active { transform: scale(0.99); }
+  .forge-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── LOADING ── */
+  .loading-box {
+    display: none;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .loading-symbol {
+    font-family: 'Cinzel', serif;
+    font-size: 44px;
+    color: var(--gold);
+    animation: spin-fade 2.5s ease-in-out infinite;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes spin-fade {
+    0%   { opacity: 0.2; transform: rotate(0deg) scale(0.95); }
+    50%  { opacity: 1;   transform: rotate(180deg) scale(1.05); }
+    100% { opacity: 0.2; transform: rotate(360deg) scale(0.95); }
+  }
+
+  .loading-phrase {
+    font-size: 16px;
+    font-style: italic;
+    color: var(--text-muted);
+    min-height: 1.5em;
+    transition: opacity 0.4s;
+  }
+
+  /* ── ERROR ── */
+  .error-box {
+    display: none;
+    background: rgba(80,20,20,0.5);
+    border: 1px solid #7a3030;
+    border-radius: 6px;
+    padding: 14px 18px;
+    color: #d07a7a;
+    font-size: 15px;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── BUILD RESULTS ── */
+  .results { display: none; }
+
+  .build-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .build-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+
+  .build-name {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .build-desc {
+    font-size: 15px;
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  /* ── PHASE PANELS ── */
+  .phase-panel {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    background: var(--bg-card);
+    backdrop-filter: blur(4px);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+
+  .phase-header:hover { background: rgba(50, 35, 10, 0.95); }
+
+  .phase-gem {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  .gem-early { background: var(--early); color: var(--early); }
+  .gem-mid   { background: var(--mid);   color: var(--mid); }
+  .gem-late  { background: var(--late);  color: var(--late); }
+
+  .phase-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+
+  .phase-arrow {
+    color: var(--text-dim);
+    font-size: 18px;
+    line-height: 1;
+    transition: transform 0.25s;
+    font-style: normal;
+  }
+
+  .phase-body {
+    padding: 1.25rem 1.5rem;
+  }
+
+  /* ── SECTION HEADING ── */
+  .sec-title {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    margin-top: 18px;
+  }
+
+  .sec-title:first-child { margin-top: 0; }
+
+  /* ── STAT GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 480px) { .stats-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; } }
+
+  .stat-card {
+    background: rgba(10, 8, 3, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    display: block;
+  }
+
+  .stat-val {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-top: 2px;
+    display: block;
+  }
+
+  /* ── ITEM LIST ── */
+  .item-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+  .item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .item-bullet {
+    color: var(--gold-dim);
+    font-size: 9px;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .item-body { color: #b8a880; }
+
+  .item-body a {
+    color: var(--gold);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212,168,75,0.25);
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .item-body a:hover {
+    color: #f0c870;
+    border-color: var(--gold);
+  }
+
+  .item-note {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ── TIP BOX ── */
+  .tip-box {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-left: 2px solid var(--gold-dim);
+    background: rgba(180,130,30,0.05);
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    text-align: center;
+    padding: 2rem 1.5rem 3rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  .site-footer a { color: var(--gold-dim); text-decoration: none; }
+  .site-footer a:hover { color: var(--gold); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0d0a05; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <span class="hero-rune">⚜ ᚱ ✦ ᚱ ⚜</span>
+  <h1 class="hero-title">Elden Ring<br>Build Advisor</h1>
+  <div class="hero-divider">
+    <div class="hero-divider-line"></div>
+    <div class="hero-divider-gem"></div>
+    <div class="hero-divider-line"></div>
+  </div>
+  <p class="hero-subtitle">Seek wisdom from the Fextralife archives, Tarnished. Receive builds forged for your playstyle — early, mid, and late game.</p>
+</header>
+
+<main class="container">
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+
+    <!-- API Key -->
+    <div class="api-row">
+      <span class="api-icon">🔑</span>
+      <input class="api-input" id="apiKey" type="password" placeholder="Enter your Anthropic API key (sk-ant-…)" autocomplete="off" />
+      <a class="api-link" href="https://console.anthropic.com/settings/keys" target="_blank">Get key ↗</a>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="field-label" for="playstyle">Playstyle</label>
+        <select class="field-select" id="playstyle">
+          <option value="">— Choose your path —</option>
+          <option value="aggressive melee brawler who loves getting in enemies faces">Aggressive Melee Brawler</option>
+          <option value="tank who wears heavy armor and wants maximum defense">Tank / Heavy Armor</option>
+          <option value="dex nimble fast attacker who dodges everything">Dex / Nimble Fast Attacker</option>
+          <option value="pure sorcery intelligence mage who stays at range">Pure Sorcery / Int Mage</option>
+          <option value="faith incantation caster mixing holy fire and lightning">Faith / Incantation Caster</option>
+          <option value="arcane bleed build stacking hemorrhage procs">Arcane / Bleed</option>
+          <option value="colossal weapon strength build with massive slow hits">Colossal Weapon / Strength</option>
+          <option value="ranged bow and arrow stealth archer">Ranged / Bow &amp; Stealth Archer</option>
+          <option value="quality build balancing strength and dexterity">Quality (STR/DEX Hybrid)</option>
+          <option value="frostbite cold magic build using ice and sorcery">Frostbite / Cold Magic</option>
+          <option value="pyromancer using fire incantations and flame arts">Pyromancer / Fire Arts</option>
+          <option value="dragon communion arcane build using dragon incantations">Dragon Communion / Arcane</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label class="field-label" for="skill">Skill Level</label>
+        <select class="field-select" id="skill">
+          <option value="">— Choose your experience —</option>
+          <option value="complete beginner who has never played a souls game before">Complete Beginner</option>
+          <option value="casual player who wants an easier time and survivability">Casual / Wants Easier Experience</option>
+          <option value="intermediate player with some souls game experience">Intermediate</option>
+          <option value="veteran experienced souls player who knows the mechanics">Veteran / Experienced</option>
+          <option value="challenge runner who wants the most optimal min-max build">Min-Maxer / Challenge Runner</option>
+        </select>
+      </div>
+
+      <div class="form-field full">
+        <label class="field-label" for="weapon">Weapon, Spell, or Starting Class</label>
+        <input class="field-input" id="weapon" type="text"
+          placeholder="e.g. Moonveil, Rivers of Blood, Greatsword, Astrologer, Samurai, Sword of Night and Flame…" />
+      </div>
+    </div>
+
+    <button class="forge-btn" id="forgeBtn" onclick="generateBuild()">
+      ✦ &nbsp; Forge My Build &nbsp; ✦
+    </button>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- LOADING -->
+  <div class="loading-box" id="loadingBox">
+    <span class="loading-symbol">⚜</span>
+    <div class="loading-phrase" id="loadingPhrase">Consulting the Fextralife archives…</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results"></div>
+
+</main>
+
+<footer class="site-footer">
+  <p>Built for Tarnished seeking glory &nbsp;·&nbsp; Data sourced from the <a href="https://eldenring.wiki.fextralife.com/" target="_blank">Fextralife Elden Ring Wiki</a></p>
+  <p style="margin-top:6px;">Powered by Claude AI &nbsp;·&nbsp; Not affiliated with FromSoftware or Bandai Namco</p>
+</footer>
+
+<script>
+const PHRASES = [
+  "Consulting the Fextralife archives…",
+  "Communing with the Two Fingers…",
+  "The Elden Ring reveals your destiny…",
+  "Seeking wisdom from Marika's legacy…",
+  "Forging builds from golden runes…",
+  "Surveying the Lands Between…",
+  "Deciphering the Erdtree's guidance…"
+];
+
+let phraseTimer, phraseIdx = 0;
+
+function startLoading() {
+  phraseIdx = 0;
+  document.getElementById('loadingPhrase').textContent = PHRASES[0];
+  phraseTimer = setInterval(() => {
+    phraseIdx = (phraseIdx + 1) % PHRASES.length;
+    const el = document.getElementById('loadingPhrase');
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = PHRASES[phraseIdx];
+      el.style.opacity = '1';
+    }, 350);
+  }, 2800);
+}
+
+function stopLoading() { clearInterval(phraseTimer); }
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.innerHTML = '⚠ &nbsp;' + msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function clearError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+
+async function generateBuild() {
+  const apiKey   = document.getElementById('apiKey').value.trim();
+  const playstyle = document.getElementById('playstyle').value;
+  const skill    = document.getElementById('skill').value;
+  const weapon   = document.getElementById('weapon').value.trim();
+
+  clearError();
+
+  if (!apiKey)     { showError('Please enter your Anthropic API key.'); return; }
+  if (!playstyle)  { showError('Please select a playstyle.'); return; }
+  if (!skill)      { showError('Please select a skill level.'); return; }
+  if (!weapon)     { showError('Please enter a weapon, spell, or starting class.'); return; }
+
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'block';
+  document.getElementById('forgeBtn').disabled = true;
+  startLoading();
+
+  const SYSTEM = `You are an expert Elden Ring build advisor with deep knowledge of the Fextralife Elden Ring wiki at https://eldenring.wiki.fextralife.com/
+
+Use the web_search tool to look up real, accurate information from the Fextralife wiki for all items you recommend — weapons, talismans, tears, armor, consumables — so you can provide correct wiki links.
+
+Respond ONLY with a valid JSON object. No markdown, no backticks, no explanation outside the JSON. Exact structure required:
+
+{
+  "buildName": "Creative thematic name",
+  "buildDescription": "2-sentence flavor description of this build's playstyle and feel",
+  "phases": {
+    "early": {
+      "label": "Early Game — Limgrave & Stormveil",
+      "stats": {"vig":20,"mnd":10,"end":15,"str":18,"dex":12,"int":9,"fth":8,"arc":7},
+      "weapons": [
+        {"name":"Weapon Name","url":"https://eldenring.wiki.fextralife.com/Weapon+Name","note":"Why this weapon"}
+      ],
+      "armor": [
+        {"name":"Armor Set","url":"https://eldenring.wiki.fextralife.com/Armor+Set","note":"Why this armor"}
+      ],
+      "talismans": [
+        {"name":"Talisman 1","url":"https://eldenring.wiki.fextralife.com/Talisman+1","effect":"What it does"},
+        {"name":"Talisman 2","url":"https://eldenring.wiki.fextralife.com/Talisman+2","effect":"What it does"},
+        {"name":"Talisman 3","url":"https://eldenring.wiki.fextralife.com/Talisman+3","effect":"What it does"},
+        {"name":"Talisman 4","url":"https://eldenring.wiki.fextralife.com/Talisman+4","effect":"What it does"}
+      ],
+      "physick": {
+        "tear1":{"name":"Tear Name","url":"https://eldenring.wiki.fextralife.com/Tear+Name","effect":"Effect description"},
+        "tear2":{"name":"Tear Name","url":"https://eldenring.wiki.fextralife.com/Tear+Name","effect":"Effect description"}
+      },
+      "consumables": [
+        {"name":"Item Name","url":"https://eldenring.wiki.fextralife.com/Item+Name","note":"When/how to use"}
+      ],
+      "ashesOfWar": [
+        {"name":"Ash Name","url":"https://eldenring.wiki.fextralife.com/Ash+Name","note":"What it does and when to use"}
+      ],
+      "tip": "One specific actionable tip for this phase"
+    },
+    "mid": {
+      "label": "Mid Game — Liurnia, Caelid & Altus Plateau",
+      ... same structure ...
+    },
+    "late": {
+      "label": "Late Game — Mountaintops, Farum Azula & Elden Throne",
+      ... same structure ...
+    }
+  }
+}
+
+Rules:
+- All items must be real Elden Ring items that exist in the game and on the Fextralife wiki
+- Fextralife URLs use + for spaces: "Erdtree's Favor" → "https://eldenring.wiki.fextralife.com/Erdtree's+Favor"
+- Exactly 4 talismans per phase — they should improve/evolve across phases
+- Exactly 2 tears for the Wondrous Physick per phase — evolve them across phases
+- 3-5 consumables per phase
+- 1-3 ashes of war per phase
+- Stats should be realistic for each phase: early ~SL 30-45, mid ~SL 60-90, late ~SL 100-150
+- Tailor everything to the player's skill level — beginners get more survivability, veterans get more aggressive optimization`;
+
+  const USER = `Create a complete Elden Ring build for:
+- Playstyle: ${playstyle}
+- Skill level: ${skill}  
+- Weapon/Spell/Class preference: ${weapon}
+
+Search the Fextralife wiki for accurate data on all items you recommend. Provide full early, mid, and late game builds with correct wiki links.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: SYSTEM,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: USER }]
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `API error ${res.status}`);
+
+    const text = data.content
+      .filter(b => b.type === "text")
+      .map(b => b.text)
+      .join("");
+
+    let json = text.trim().replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+    const a = json.indexOf('{'), b2 = json.lastIndexOf('}');
+    if (a !== -1 && b2 !== -1) json = json.slice(a, b2 + 1);
+
+    const build = JSON.parse(json);
+    renderBuild(build);
+
+  } catch(err) {
+    showError("The Greater Will is silent… " + err.message + ". Check your API key and try again.");
+  } finally {
+    stopLoading();
+    document.getElementById('loadingBox').style.display = 'none';
+    document.getElementById('forgeBtn').disabled = false;
+  }
+}
+
+function renderBuild(build) {
+  const gems = ['gem-early','gem-mid','gem-late'];
+  const phases = ['early','mid','late'];
+
+  let html = `<div class="build-header">
+    <div class="build-name">${esc(build.buildName || 'Your Build')}</div>
+    <div class="build-desc">${esc(build.buildDescription || '')}</div>
+  </div>`;
+
+  phases.forEach((phase, i) => {
+    const p = build.phases?.[phase];
+    if (!p) return;
+    html += `
+    <div class="phase-panel">
+      <div class="phase-header" onclick="togglePhase('pb-${phase}', this)">
+        <div class="phase-gem ${gems[i]}"></div>
+        <div class="phase-title">${esc(p.label || phase)}</div>
+        <span class="phase-arrow">▾</span>
+      </div>
+      <div class="phase-body" id="pb-${phase}">`;
+
+    if (p.stats) {
+      html += `<div class="sec-title">Target Stats</div><div class="stats-grid">`;
+      const labels = {vig:'VIG',mnd:'MND',end:'END',str:'STR',dex:'DEX',int:'INT',fth:'FTH',arc:'ARC'};
+      Object.entries(labels).forEach(([k,l]) => {
+        if (p.stats[k] != null) html += `<div class="stat-card"><span class="stat-label">${l}</span><span class="stat-val">${p.stats[k]}</span></div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += renderSection('Weapons', p.weapons, (w) => `<a href="${w.url}" target="_blank">${esc(w.name)}</a>${w.note ? ` <span class="item-note">— ${esc(w.note)}</span>` : ''}`);
+    html += renderSection('Armor', p.armor, (a) => `<a href="${a.url}" target="_blank">${esc(a.name)}</a>${a.note ? ` <span class="item-note">— ${esc(a.note)}</span>` : ''}`);
+    html += renderSection('Talismans (×4)', p.talismans, (t) => `<a href="${t.url}" target="_blank">${esc(t.name)}</a>${t.effect ? ` <span class="item-note">— ${esc(t.effect)}</span>` : ''}`);
+
+    if (p.physick?.tear1 || p.physick?.tear2) {
+      html += `<div class="sec-title">Wondrous Physick</div><ul class="item-list">`;
+      [p.physick.tear1, p.physick.tear2].filter(Boolean).forEach(t => {
+        html += `<li class="item-row"><span class="item-bullet">◆</span><span class="item-body"><a href="${t.url}" target="_blank">${esc(t.name)}</a>${t.effect ? ` <span class="item-note">— ${esc(t.effect)}</span>` : ''}</span></li>`;
+      });
+      html += `</ul>`;
+    }
+
+    html += renderSection('Key Consumables', p.consumables, (c) => `<a href="${c.url}" target="_blank">${esc(c.name)}</a>${c.note ? ` <span class="item-note">— ${esc(c.note)}</span>` : ''}`);
+    html += renderSection('Ashes of War', p.ashesOfWar, (w) => `<a href="${w.url}" target="_blank">${esc(w.name)}</a>${w.note ? ` <span class="item-note">— ${esc(w.note)}</span>` : ''}`);
+
+    if (p.tip) html += `<div class="tip-box">💡 ${esc(p.tip)}</div>`;
+
+    html += `</div></div>`;
+  });
+
+  const el = document.getElementById('results');
+  el.innerHTML = html;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderSection(title, items, renderFn) {
+  if (!items?.length) return '';
+  let html = `<div class="sec-title">${title}</div><ul class="item-list">`;
+  items.forEach(item => {
+    html += `<li class="item-row"><span class="item-bullet">◆</span><span class="item-body">${renderFn(item)}</span></li>`;
+  });
+  return html + '</ul>';
+}
+
+function togglePhase(id, header) {
+  const body = document.getElementById(id);
+  const arrow = header.querySelector('.phase-arrow');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.style.transform = open ? 'rotate(-90deg)' : 'rotate(0)';
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
